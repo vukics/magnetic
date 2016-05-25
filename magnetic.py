@@ -64,12 +64,11 @@ class CylindricallySymmetricSolid(object) :
         self.direction = 1 if n else -1
         
 
-    def calculateField(self,r_mg,calculateJacobian=False) :
+    def calculateField(self,x,y,z,calculateJacobian=False) :        
         """
         Arguments
         ----------
-            r_mg: meshgrid representing positions (in units of d) where the magnetic field is evaluated
-                [[x1,x2,…],[y1,y2,…],[z1,z2,…]], shape (3,Nx,Ny,Nz)
+            r: list of x, y, z coordinates that can be array_like types
 
         Returns
         --------
@@ -77,16 +76,31 @@ class CylindricallySymmetricSolid(object) :
             a vector for the B field at each position specified in r in inverse units of (mu I) / (2 pi d)
             (for I in amps and d in meters and mu = 4 pi * 10^-7 we get Tesla)
         """
-
-        r = np.transpose(r_mg,(2,1,3,0)) # shape (Nx,Ny,Nz,3)
+        
+        arrayInputs=list()
+        arrayInputIndeces=list()
+        for i, xx in enumerate([x,y,z]) :
+            if type(xx).__module__ == np.__name__ :
+                arrayInputs.append(xx)
+                arrayInputIndeces.append(i)
+        if len(arrayInputs) > 1 :
+            r = np.meshgrid(*arrayInputs,indexing='ij')
+            i=0
+            if 0 in arrayInputIndeces :
+                x = r[0]
+                i += 1
+            if 1 in arrayInputIndeces :
+                y = r[i]
+                i += 1
+            if 2 in arrayInputIndeces :
+                z = r[i]
 
         # point location from center of coil
-        r = r - self.r0
+        for xx, x0 in zip([x,y,z],self.r0) : xx -= x0
 
         #### calculate field
 
         # express the coordinates in polar form
-        x = r[...,0]; y = r[...,1]; z = r[...,2]
         rho = np.sqrt(x**2 + y**2)
         phi = np.arctan2(y,x)
         
@@ -204,9 +218,9 @@ class ArrayOfSources(object) :
  
     def setCurrents(self,*c) : self.relativeCurrents=c
     
-    def calculateField(self,r_mg,calculateJacobian=False) :
-        B = self.arrayOfSources[0].calculateField(r_mg)*self.relativeCurrents[0]
-        for x, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) : B += x.calculateField(r_mg,calculateJacobian)*I
+    def calculateField(self,x,y,z,calculateJacobian=False) :
+        B = self.arrayOfSources[0].calculateField(x,y,z,calculateJacobian)*self.relativeCurrents[0]
+        for x, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) : B += x.calculateField(x,y,z,calculateJacobian)*I
         return B
 
 
