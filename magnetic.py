@@ -99,10 +99,9 @@ class CylindricallySymmetricSolid(object) :
         
         C=np.cos(phi); S=np.sin(phi); ZERO=np.zeros(phi.shape); ONE=np.ones(phi.shape)
         
-        localTrans    = create3by3matrix(C, -S, ZERO,  S, C, ZERO, ZERO, ZERO, ONE) # shape (Nrow, Ncol, Nx, Ny, Nz) = (3,3,Nx,Ny,Nz)
-        localTransInv = create3by3matrix(C,  S, ZERO, -S, C, ZERO, ZERO, ZERO, ONE)
+        localTrans = create3by3matrix(C, -S, ZERO,  S, C, ZERO, ZERO, ZERO, ONE) # shape (Nrow, Ncol, Nx, Ny, Nz) = (3,3,Nx,Ny,Nz)
 
-        # Rotate the field back in the lab’s frame. For this the axis representing space has to be rolled to the necessary position (and then rolled back)
+        # Rotate the field back in the lab’s frame.
 
         res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian))*self.direction
         field = filterIndeces(matrixVector(localTrans,res[:3]))
@@ -113,11 +112,13 @@ class CylindricallySymmetricSolid(object) :
             rhoDerivs = res[3::3]
             phiDerivs = res[4::3]
             
-            xderivs = -y/rho**2*matrixVector(localTransPhiDerivative,res[:3])+matrixVector(localTrans,(2*x*rhoDerivs-y/rho**2*phiDerivs))
-            yderivs =  x/rho**2*matrixVector(localTransPhiDerivative,res[:3])+matrixVector(localTrans,(2*y*rhoDerivs+x/rho**2*phiDerivs))
+            xderivs = -y/rho**2*matrixVector(localTransPhiDerivative,res[:3])+matrixVector(localTrans,(x/rho*rhoDerivs-y/rho**2*phiDerivs))
+            yderivs =  x/rho**2*matrixVector(localTransPhiDerivative,res[:3])+matrixVector(localTrans,(y/rho*rhoDerivs+x/rho**2*phiDerivs))
             zderivs = matrixVector(localTrans,res[5::3])
             
-            return field, create3by3matrix(xderivs[0],yderivs[0],zderivs[0],xderivs[1],yderivs[1],zderivs[1],xderivs[2],yderivs[2],zderivs[2])
+            jacobian = filterIndeces(create3by3matrix(xderivs[0],yderivs[0],zderivs[0],xderivs[1],yderivs[1],zderivs[1],xderivs[2],yderivs[2],zderivs[2]))
+            
+            return field, jacobian
         else :
             return field
 
@@ -212,10 +213,10 @@ class ArrayOfSources(object) :
  
     def setCurrents(self,*c) : self.relativeCurrents[:len(c)]=c
     
-    def calculateField(self,x,y,z) :
-        B = self.arrayOfSources[0].calculateField(x,y,z)*self.relativeCurrents[0]
+    def calculateField(self,x,y,z,calculateJacobian=False) :
+        B = self.arrayOfSources[0].calculateField(x,y,z,calculateJacobian)*self.relativeCurrents[0]
         for source, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) : 
-            if not I==0 : B += source.calculateField(x,y,z)*I
+            if not I==0 : B += source.calculateField(x,y,z,calculateJacobian)*I
         return B
 
 
