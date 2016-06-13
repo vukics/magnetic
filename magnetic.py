@@ -195,6 +195,52 @@ class InfiniteWire(CylindricallySymmetricSolid) :
 
 
 
+class CoilNew(CylindricallySymmetricSolid) :
+    """
+    Coil with rectangular cross section
+    
+    It is now implemented in terms of a CylindricallySymmetricSolid rather than ArrayOfSources
+    At the moment, it cannot calculate Jacobian
+    """
+    
+    def __init__(self,n,r0,R,w,nw,h,nh) :
+        """
+        Arguments
+        ----------
+            n: bool
+                True if direction vector points upwards
+            r0: ndarray, shape (3, )
+                The location of the centre of the trap
+            R: float
+                Inner radius
+            w: float
+                The width of the rectangular cross section
+            nw: float
+                Number of loops along width
+            h: float
+                The height of the rectangular cross section
+            nh: float
+                Number of loops along height
+        
+        There are no relative currents here, as the same current will flow in all loops
+        """
+        super(CoilNew,self).__init__(n,r0)
+
+        self.loops=[CurrentLoop(n,r0+i*nz(n),Rj) for i in np.linspace(-h/2.,h/2.,nh) for Rj in np.linspace(R,R+w,nw)]
+
+
+    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z,calculateJacobian) :
+        midres=self.loops[0].calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian)
+        Brho=midres[0]; Bz=midres[2]
+        for source in self.loops[1:] :
+            midres=source.calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian)
+            Brho+=midres[0]; Bz+=midres[2]
+
+        ZERO = np.zeros(Brho.shape); res = (Brho, ZERO, Bz)
+        return res
+
+
+
 class ArrayOfSources(object) :
     """
     Adds up the fields of its elements
@@ -233,7 +279,7 @@ class Coil(ArrayOfSources) :
     """
     Coil with rectangular cross section
     
-    At the moment, this is a simple array of current loops, so we completely disregard the fact that the transition matrices will be the same for all loops, that is, that Coil is itself a CylindricallySymmetricSolid.
+    Here, this is a simple array of current loops, so we completely disregard the fact that the transition matrices will be the same for all loops, that is, that Coil is itself a CylindricallySymmetricSolid.
     This is because multiple inheritance is rather tiresome in python.
     Hope this won’t cause too big an overhead…
     """
@@ -394,6 +440,3 @@ class HelmholtzCoil(ArrayOfSources) :
             CurrentLoop(n,r0+R/2.*nz(n),R),
             CurrentLoop(n,r0-R/2.*nz(n),R)
             ])
-
-
-
