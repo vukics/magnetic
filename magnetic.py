@@ -160,6 +160,13 @@ class CurrentLoop(CylindricallySymmetricSolid) :
         return res if not calculateJacobian else res+(e[2](z,rho,self.R),ZERO,e[3](z,rho,self.R),ZERO,ZERO,ZERO,e[4](z,rho,self.R),ZERO,e[5](z,rho,self.R))
 
 
+    def thermalPowerCoeff(self,r) :
+        """
+        L/A : To be multiplied by the resistivity and I**2 to get the power
+        """
+        return 2*self.R/r**2
+
+
 
 class InfiniteWire(CylindricallySymmetricSolid) :
     """
@@ -192,6 +199,10 @@ class InfiniteWire(CylindricallySymmetricSolid) :
             dBphidrho = -1./rho**2
             dBphidrho[rho<self.rhoLimit] = 0
             return res+(ZERO, ZERO, ZERO, dBphidrho, ZERO, ZERO, ZERO, ZERO, ZERO)
+
+
+    def thermalPowerCoeff(self,r) :
+        raise NotImplementedError
 
 
 
@@ -260,18 +271,27 @@ class ArrayOfSources(object) :
  
  
     def setCurrents(self,*c) : self.relativeCurrents[:len(c)]=c
-    
+
+
     def helper(self,function) :
         res = function(self.arrayOfSources[0])*self.relativeCurrents[0] # this should also be eliminated if the current is 0!
         for source, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) :
             if not I==0 : res += function(source)*I
         return res
-    
+
+
     def calculateField(self,x,y,z,calculateJacobian=False) :
         if not calculateJacobian :
             return self.helper(lambda source : source.calculateField(x,y,z,calculateJacobian))
         else :
             return tuple( self.helper(lambda source : source.calculateField(x,y,z,calculateJacobian)[i]) for i in (0,1) )
+
+
+    def thermalPowerCoeff(self,r) :
+        res = self.arrayOfSources[0].thermalPowerCoeff(r)*self.relativeCurrents[0]**2
+        for source, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) :
+            res+=source.thermalPowerCoeff(r)*I**2
+        return res
 
 
 
@@ -382,7 +402,7 @@ class QuadrupoleSimplex(ArrayOfSources) :
     def coefficient(self) :
         A = self.d/2
         R = self.arrayOfSources[0].R
-        return 3*math.pi*A*R**2/(R**2+A**2)**2.5
+        return 3*math.pi*A*R**2/(R**2+A**2)**2.5, 5*math.pi*(4*A**2-3*R**2)/(6*(A**2+R**2)**2)
 
 
 
