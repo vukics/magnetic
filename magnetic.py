@@ -56,9 +56,9 @@ class CylindricallySymmetricSolid(object) :
         ### Translate the coordinates in the coil's frame
         n, l, m = baseVectors(n)
         
-        # transformation matrix wire frame to lab frame
+        # transformation matrix lab frame => own frame
         self.trans = np.vstack((l,m,n))
-        # transformation matrix to lab frame to wire frame
+        # transformation matrix own frame => lab frame
         self.transInv = np.linalg.inv(self.trans)
 
 
