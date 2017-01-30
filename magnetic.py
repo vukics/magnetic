@@ -5,6 +5,33 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 
+
+def symbolicForCurrentLoop() :
+    import sympy as sp
+
+    from sympy.functions.special.elliptic_integrals import elliptic_k, elliptic_e
+
+    from sympy import sympify, lambdify, Eq, sqrt, diff
+
+    z = sp.symbols('z', real=True)
+    rho, R, m = sp.symbols('rho R m', positive=True)
+    
+    Bz=1/sqrt((R+rho)**2+z**2)*(elliptic_k(m)+(R**2-rho**2-z**2)/((R-rho)**2+z**2)*elliptic_e(m))
+    Brho=z/(rho*sqrt((R+rho)**2+z**2))*(-elliptic_k(m)+(R**2+rho**2+z**2)/((R-rho)**2+z**2)*elliptic_e(m))
+    
+    mExpr=(4*R*rho)/((R+rho)**2+z**2)
+    
+    Bz=Bz.subs(m,mExpr)
+    Brho=Brho.subs(m,mExpr)
+
+    def _doLambdify(expr) :
+        return lambdify((z,rho,R),expr,
+                        modules=[{"elliptic_k": special.ellipk, "elliptic_e": special.ellipe},"numpy"])
+
+    return _doLambdify(Bz), _doLambdify(Brho), _doLambdify(diff(Brho,rho)), _doLambdify(diff(Brho,z)), _doLambdify(diff(Bz,rho)), _doLambdify(diff(Bz,z))
+
+
+
 def baseVectors(n) :
     """ Returns 3 orthognal base vectors, the first one colinear to n.
         At some point the routine could be written back to accept an array of base vectors
@@ -124,13 +151,14 @@ class CurrentLoop(CylindricallySymmetricSolid) :
 
         self.R = R
 
+        self.expressions = symbolicForCurrentLoop()
 
-    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z) :
-        argumentOfElliptic = (4 * self.R * rho)/( (self.R + rho)**2 + z**2)
-        E = special.ellipe(argumentOfElliptic); K = special.ellipk(argumentOfElliptic)
-        Bz = 1/np.sqrt((self.R + rho)**2 + z**2) * (K + E * (self.R**2 - rho**2 - z**2)/((self.R - rho)**2 + z**2))
-        Brho = z/(rho*np.sqrt((self.R + rho)**2 + z**2)) * (-K + E * (self.R**2 + rho**2 + z**2)/((self.R - rho)**2 + z**2))
         # On the axis of the coil we get a division by zero here. This returns a NaN, where the field is actually zero :
+
+    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z,calculateJacobian) :
+        e = self.expressions
+        Bz = e[0](z,rho,self.R)
+        Brho = e[1](z,rho,self.R)
         Brho[np.isnan(Brho)] = 0; Brho[np.isinf(Brho)] = 0
         Bz[np.isnan(Bz)]     = 0; Bz[np.isinf(Bz)]     = 0
 
