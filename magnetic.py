@@ -7,19 +7,20 @@ from matplotlib import cm
 
 def baseVectors(n) :
     """ Returns 3 orthognal base vectors, the first one colinear to n.
+        At some point the routine could be written back to accept an array of base vectors
 
         Parameters
         -----------
-        n: ndarray, shape (3, )
+        n: ndarray, shape (3)
             A vector giving direction of the basis
 
         Returns
         -----------
-        n: ndarray, shape (3, )
+        n: ndarray, shape (3)
             The first vector of the basis
-        l: ndarray, shape (3, )
+        l: ndarray, shape (3)
             The second vector of the basis
-        m: ndarray, shape (3, )
+        m: ndarray, shape (3)
             The first vector of the basis
 
     """
