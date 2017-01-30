@@ -89,10 +89,21 @@ class CylindricallySymmetricSolid(object) :
         x = r[...,0]; y = r[...,1]; z = r[...,2]
         rho = np.sqrt(x**2 + y**2)
         phi = np.arctan2(y,x)
+        
+        C=np.cos(phi); S=np.sin(phi); ZERO=np.zeros(phi.shape); ONE=np.ones(phi.shape)
+        
+        localTrans    = np.array((np.array((C, -S, ZERO)), np.array(( S, C, ZERO)), np.array((ZERO, ZERO, ONE)))) # shape (Nrow, Ncol, Nx, Ny, Nz) = (3,3,Nx,Ny,Nz)
+        localTransInv = np.array((np.array((C,  S, ZERO)), np.array((-S, C, ZERO)), np.array((ZERO, ZERO, ONE))))
+        
+        print(localTrans.shape)
 
-        # Rotate the field back in the lab’s frame
-        # For this the axis representing space has to be rolled to the necessary position (and then rolled back)
-        return np.rollaxis(np.dot(np.rollaxis(np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z)),0,4), self.trans),3)
+        fullTrans=np.einsum('ij,jklmn',self.transInv,localTrans)
+        print(fullTrans.shape)
+
+        # Rotate the field back in the lab’s frame. For this the axis representing space has to be rolled to the necessary position (and then rolled back)
+        #return np.rollaxis(np.dot(np.rollaxis(np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z)),0,4), self.trans),3)
+
+        return np.einsum('ij...,j...->i...',fullTrans,np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z)))
         
 
 
@@ -122,7 +133,7 @@ class CurrentLoop(CylindricallySymmetricSolid) :
         Brho[np.isnan(Brho)] = 0; Brho[np.isinf(Brho)] = 0
         Bz[np.isnan(Bz)]     = 0; Bz[np.isinf(Bz)]     = 0
 
-        return np.cos(phi)*Brho, np.sin(phi)*Brho, Bz
+        return Brho, np.zeros(Brho.shape), Bz
 
 
 
@@ -147,9 +158,10 @@ class InfiniteWire(CylindricallySymmetricSolid) :
 
         
     def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z) :
-        Bphi=-1./rho
+        Bphi=1./rho
         Bphi[rho<self.rhoLimit]=0
-        return -np.sin(phi)*Bphi, np.cos(phi)*Bphi, np.zeros(Bphi.shape)
+        ZERO=np.zeros(Bphi.shape)
+        return ZERO, Bphi, ZERO
 
 
 
