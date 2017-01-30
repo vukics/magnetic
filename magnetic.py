@@ -90,7 +90,7 @@ class CylindricallySymmetricSolid(object) :
         self.transInv = np.linalg.inv(self.trans)
 
 
-    def calculateField(self,r_mg) :
+    def calculateField(self,r_mg,calculateJacobian=False) :
         """
         Arguments
         ----------
@@ -123,16 +123,23 @@ class CylindricallySymmetricSolid(object) :
         localTrans    = np.array((np.array((C, -S, ZERO)), np.array(( S, C, ZERO)), np.array((ZERO, ZERO, ONE)))) # shape (Nrow, Ncol, Nx, Ny, Nz) = (3,3,Nx,Ny,Nz)
         localTransInv = np.array((np.array((C,  S, ZERO)), np.array((-S, C, ZERO)), np.array((ZERO, ZERO, ONE))))
         
-        print(localTrans.shape)
-
-        fullTrans=np.einsum('ij,jklmn',self.transInv,localTrans)
-        print(fullTrans.shape)
-
-        # Rotate the field back in the lab’s frame. For this the axis representing space has to be rolled to the necessary position (and then rolled back)
-        #return np.rollaxis(np.dot(np.rollaxis(np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z)),0,4), self.trans),3)
-
-        return np.einsum('ij...,j...->i...',fullTrans,np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z)))
+        fullTrans    = np.einsum('ij,jk...->ik...',self.transInv,localTrans)
+        fullTransInv = np.einsum('ij,jk...->ik...',self.trans,localTransInv)
         
+        # Rotate the field back in the lab’s frame. For this the axis representing space has to be rolled to the necessary position (and then rolled back)
+
+        res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian))
+        field = np.einsum('ij...,j...->i...',fullTrans,res[:3])
+        
+        print(res.shape)
+
+        if (calculateJacobian) :
+            jacobian = res[3:].reshape((3,3)+res.shape[1:])
+            print(jacobian.shape)
+            jacobian = np.einsum('ij...,jk...->ik...',fullTrans,np.einsum('ij...,jk...->ik...',jacobian,fullTransInv))
+            return (field,jacobian)
+        else : return field
+
 
 
 class CurrentLoop(CylindricallySymmetricSolid) :
@@ -162,7 +169,10 @@ class CurrentLoop(CylindricallySymmetricSolid) :
         Brho[np.isnan(Brho)] = 0; Brho[np.isinf(Brho)] = 0
         Bz  [np.isnan(Bz)]   = 0; Bz  [np.isinf(Bz)]   = 0
 
-        return Brho, np.zeros(Brho.shape), Bz
+        ZERO = np.zeros(Brho.shape)
+
+        res = (Brho, ZERO, Bz)
+        return res if not calculateJacobian else res+(e[2](z,rho,self.R),ZERO,e[3](z,rho,self.R),ZERO,ZERO,ZERO,e[4](z,rho,self.R),ZERO,e[5](z,rho,self.R))
 
 
 
@@ -185,8 +195,8 @@ class InfiniteWire(CylindricallySymmetricSolid) :
         super(InfiniteWire,self).__init__(n,r0)
         self.rhoLimit=rhoLimit
 
-        
-    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z) :
+
+    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z,calculateJacobian) :
         Bphi=1./rho
         Bphi[rho<self.rhoLimit]=0
         ZERO=np.zeros(Bphi.shape)
