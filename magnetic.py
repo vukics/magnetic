@@ -26,9 +26,9 @@ def baseVectors(n) :
     # normalize n
     n = n / np.linalg.norm(n)
 
-    # choose two vectors perpendicular to n (choice is arbitrary since the coil is symetric about n)
-    if  np.abs(n[0])==1 : l = np.array([n[2], 0, -n[0]])
-    else :                l = np.array([0, n[2], -n[1]])
+    # choose two vectors perpendicular to n (choice is arbitrary since the solid is symetric about n)
+    if  n[1]==0 and n[2]==0  : l = np.array((0, 1   , 0   ))
+    else                     : l = np.array((0, n[2],-n[1]))
 
     l = l / np.linalg.norm(l)
     m = np.cross(n, l)
