@@ -153,14 +153,14 @@ class CurrentLoop(CylindricallySymmetricSolid) :
 
         self.expressions = symbolicForCurrentLoop()
 
-        # On the axis of the coil we get a division by zero here. This returns a NaN, where the field is actually zero :
 
     def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z,calculateJacobian) :
         e = self.expressions
         Bz = e[0](z,rho,self.R)
         Brho = e[1](z,rho,self.R)
+        # On the axis of the coil we get a division by zero here. This returns a NaN where the field is actually zero :
         Brho[np.isnan(Brho)] = 0; Brho[np.isinf(Brho)] = 0
-        Bz[np.isnan(Bz)]     = 0; Bz[np.isinf(Bz)]     = 0
+        Bz  [np.isnan(Bz)]   = 0; Bz  [np.isinf(Bz)]   = 0
 
         return Brho, np.zeros(Brho.shape), Bz
 
