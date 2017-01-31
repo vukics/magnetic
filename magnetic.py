@@ -344,8 +344,9 @@ def visualizeFieldMap(B,xcoord,ycoord,nLevels=40,Bmax=-1) :
     fig.colorbar(temp,ax=BnormAxis)
 
     xaxis=axes[1,1]; ymid=round(Bnorm.shape[1]/2)
-    xaxis.plot(xcoord,Bnorm[:,ymid])
-    for i in range(3) : xaxis.plot(xcoord,B[i,:,ymid])
+    xaxis.plot(xcoord,Bnorm[:,ymid],linewidth=3,label="$|B|$")
+    for i, s in zip(range(3),["x","y","z"]) : xaxis.plot(xcoord,B[i,:,ymid],label="$B_"+s+"$")
+    xaxis.legend()
     
     yaxis=axes[1,2]; xmid=round(Bnorm.shape[0]/2)
     yaxis.plot(ycoord,Bnorm[xmid,:])
