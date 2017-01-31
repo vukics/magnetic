@@ -168,9 +168,8 @@ class CurrentLoop(CylindricallySymmetricSolid) :
         Brho[np.isnan(Brho)] = 0; Brho[np.isinf(Brho)] = 0
         Bz  [np.isnan(Bz)]   = 0; Bz  [np.isinf(Bz)]   = 0
 
-        ZERO = np.zeros(Brho.shape)
-
-        res = (Brho, ZERO, Bz)
+        ZERO = np.zeros(Brho.shape); res = (Brho, ZERO, Bz)
+        
         return res if not calculateJacobian else res+(e[2](z,rho,self.R),ZERO,e[3](z,rho,self.R),ZERO,ZERO,ZERO,e[4](z,rho,self.R),ZERO,e[5](z,rho,self.R))
 
 
@@ -323,8 +322,8 @@ def visualizeFieldMap(B,xcoord,ycoord,nLevels=40,Bmax=-1) :
     """
     Here, eventually some kwargs could be passed to enable tailoring the plot from the outside
     """
-    Bnorm=np.linalg.norm(B,axis=0);
-    if Bmax>0 : B[:,Bnorm>Bmax]=0; Bnorm=np.linalg.norm(B,axis=0);
+    Bnorm=np.linalg.norm(B,axis=0)
+    if Bmax>0 : B[:,Bnorm>Bmax]=0
 
     fig, axes = plt.subplots(ncols=3,nrows=2,figsize=(24,12))
 
