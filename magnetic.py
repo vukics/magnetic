@@ -353,3 +353,8 @@ def visualizeFieldMap(B,xcoord,ycoord,nLevels=40,Bmax=-1) :
 
     fig.tight_layout()
     plt.show()
+
+
+
+def gradientOfNorm(B,Bnorm,Jacobian) :
+    return np.einsum("i...,ij...",B,Jacobian)/Bnorm
