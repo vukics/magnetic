@@ -197,10 +197,17 @@ class InfiniteWire(CylindricallySymmetricSolid) :
 
 
     def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z,calculateJacobian) :
-        Bphi=1./rho
-        Bphi[rho<self.rhoLimit]=0
-        ZERO=np.zeros(Bphi.shape)
-        return ZERO, Bphi, ZERO
+        Bphi = 1./rho
+        Bphi[rho<self.rhoLimit] = 0
+        
+        ZERO = np.zeros(Bphi.shape); res = (ZERO, Bphi, ZERO)
+        
+        if not calculateJacobian : return res
+        else :
+            dBphidrho = -1./rho**2
+            dBphidrho[rho<self.rhoLimit] = 0
+            return res+(ZERO, ZERO, ZERO, dBphidrho, ZERO, ZERO, ZERO, ZERO, ZERO)
+            
 
 
 
