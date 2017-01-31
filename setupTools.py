@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 
 # Everything is in mm and A, so the field is to be multiplied by 2 to get Gauss
 
-MOT_innerRadius=17; MOT_outerRadius=32
+MOT_innerRadius=16; MOT_outerRadius=32
 origo=np.zeros(3); otherCenter=np.array([MOT_outerRadius,0,0])
 
-MOT=mg.QuadrupoleTrap(True,origo,MOT_innerRadius,MOT_outerRadius-MOT_innerRadius,13,10,12,42)
-transferCoil=mg.QuadrupoleTrap(True,otherCenter,13,11,7,6,7,24)
-compressionCoil=mg.QuadrupoleTrap(True,otherCenter,6,6,5,10,9,18)
+MOT=mg.QuadrupoleTrap(True,origo,MOT_innerRadius,MOT_outerRadius-MOT_innerRadius,16,10,10,44)
+transferCoil=mg.QuadrupoleTrap(True,otherCenter,13,11,11,6,6,26)
+compressionCoil=mg.QuadrupoleTrap(True,otherCenter,6,6,6,10,10,20)
 wires=mg.ArrayOfSources([mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],1.6,.025),
                          mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],4.6,.025)
                         ])
