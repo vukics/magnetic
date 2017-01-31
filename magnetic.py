@@ -131,14 +131,13 @@ class CylindricallySymmetricSolid(object) :
         res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian))
         field = np.einsum('ij...,j...->i...',fullTrans,res[:3])
         
-        print(res.shape)
+        Bnorm=np.linalg.norm(field,axis=0)
 
         if (calculateJacobian) :
             jacobian = res[3:].reshape((3,3)+res.shape[1:])
-            print(jacobian.shape)
             jacobian = np.einsum('ij...,jk...->ik...',fullTrans,np.einsum('ij...,jk...->ik...',jacobian,fullTransInv))
-            return (field,jacobian)
-        else : return field
+            return field, Bnorm, jacobian
+        else : return field, Bnorm
 
 
 
