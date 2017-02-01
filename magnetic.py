@@ -6,6 +6,12 @@ from matplotlib import cm
 
 
 
+def create3by3matrix(a00,a01,a02,a10,a11,a12,a20,a21,a22) : return np.array((np.array((a00,a01,a02)), np.array((a10,a11,a12)), np.array((a20,a21,a22))))
+
+def matrixVector(m,v) : return np.einsum('ij...,j...->i...',m,v)
+
+
+
 def symbolicForCurrentLoop() :
     import sympy as sp
 
@@ -32,38 +38,6 @@ def symbolicForCurrentLoop() :
 
 
 
-def baseVectors(n) :
-    """ Returns 3 orthognal base vectors, the first one colinear to n.
-        At some point the routine could be written back to accept an array of base vectors
-
-        Parameters
-        -----------
-        n: ndarray, shape (3)
-            A vector giving direction of the basis
-
-        Returns
-        -----------
-        n: ndarray, shape (3)
-            The first vector of the basis
-        l: ndarray, shape (3)
-            The second vector of the basis
-        m: ndarray, shape (3)
-            The first vector of the basis
-
-    """
-    # normalize n
-    n = n / np.linalg.norm(n)
-
-    # choose two vectors perpendicular to n (choice is arbitrary since the solid is symetric about n)
-    if  n[1]==0 and n[2]==0  : l = np.array((0, 1   , 0   ))
-    else                     : l = np.array((0, n[2],-n[1]))
-
-    l = l / np.linalg.norm(l)
-    m = np.cross(n, l)
-    return n, l, m
-
-
-
 class CylindricallySymmetricSolid(object) :
     """
     Just to factor out common code from the current loop and the wire
@@ -73,22 +47,16 @@ class CylindricallySymmetricSolid(object) :
         """
         Arguments
         ----------
-            n: ndarray, shape (3, )
-                The direction vector defining the axis of the cylindrical symmetry
+            n: bool
+                True if direction vector points upwards
             r0: ndarray, shape (3, )
                 The location of the solid in units of d: [x y z]
         """
       
         self.r0 = r0;
 
-        ### Translate the coordinates in the coil's frame
-        n, l, m = baseVectors(n)
+        self.direction = 1 if n else -1
         
-        # transformation matrix lab frame => own frame
-        self.trans = np.vstack((l,m,n))
-        # transformation matrix own frame => lab frame
-        self.transInv = np.linalg.inv(self.trans)
-
 
     def calculateField(self,r_mg,calculateJacobian=False) :
         """
@@ -108,8 +76,6 @@ class CylindricallySymmetricSolid(object) :
 
         # point location from center of coil
         r = r - self.r0
-        # transform vector to coil frame
-        r = np.dot(r, self.transInv)
 
         #### calculate field
 
@@ -120,24 +86,26 @@ class CylindricallySymmetricSolid(object) :
         
         C=np.cos(phi); S=np.sin(phi); ZERO=np.zeros(phi.shape); ONE=np.ones(phi.shape)
         
-        localTrans    = np.array((np.array((C, -S, ZERO)), np.array(( S, C, ZERO)), np.array((ZERO, ZERO, ONE)))) # shape (Nrow, Ncol, Nx, Ny, Nz) = (3,3,Nx,Ny,Nz)
-        localTransInv = np.array((np.array((C,  S, ZERO)), np.array((-S, C, ZERO)), np.array((ZERO, ZERO, ONE))))
-        
-        fullTrans    = np.einsum('ij,jk...->ik...',self.transInv,localTrans)
-        fullTransInv = np.einsum('ij,jk...->ik...',self.trans,localTransInv)
-        
+        localTrans    = create3by3matrix(C, -S, ZERO,  S, C, ZERO, ZERO, ZERO, ONE) # shape (Nrow, Ncol, Nx, Ny, Nz) = (3,3,Nx,Ny,Nz)
+        localTransInv = create3by3matrix(C,  S, ZERO, -S, C, ZERO, ZERO, ZERO, ONE)
+
         # Rotate the field back in the lab’s frame. For this the axis representing space has to be rolled to the necessary position (and then rolled back)
 
-        res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian))
-        field = np.einsum('ij...,j...->i...',fullTrans,res[:3])
+        res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian))*self.direction
+        field = matrixVector(localTrans,res[:3])
         
-        Bnorm=np.linalg.norm(field,axis=0)
-
         if (calculateJacobian) :
-            jacobian = res[3:].reshape((3,3)+res.shape[1:])
-            jacobian = np.einsum('ij...,jk...->ik...',fullTrans,np.einsum('ij...,jk...->ik...',jacobian,fullTransInv))
-            return field, Bnorm, jacobian
-        else : return field, Bnorm
+            localTransPhiDerivative = create3by3matrix(-S, -C, ZERO, C, -S, ZERO, ZERO, ZERO, ONE)
+            
+            rhoDerivs = res[3::3]
+            phiDerivs = res[4::3]
+            
+            xderivs = -y/rho**2*matrixVector(localTransPhiDerivative,res[:3])+matrixVector(localTrans,(2*x*rhoDerivs-y/rho**2*phiDerivs))
+            yderivs =  x/rho**2*matrixVector(localTransPhiDerivative,res[:3])+matrixVector(localTrans,(2*y*rhoDerivs+x/rho**2*phiDerivs))
+            zderivs = matrixVector(localTrans,res[5::3])
+            
+            return field, create3by3matrix(xderivs[0],yderivs[0],zderivs[0],xderivs[1],yderivs[1],zderivs[1],xderivs[2],yderivs[2],zderivs[2])
+        else : return field
 
 
 
@@ -150,6 +118,10 @@ class CurrentLoop(CylindricallySymmetricSolid) :
         """
         Arguments
         ----------
+            n: bool
+                True if direction vector points upwards
+            r0: ndarray, shape (3, )
+                The location of the solid in units of d: [x y z]
             R: float
                 The radius of the current loop
         """
@@ -183,10 +155,10 @@ class InfiniteWire(CylindricallySymmetricSolid) :
         """
         Arguments
         ----------
-            n: ndarray, shape (3, )
-                The direction vector of the wire
+            n: bool
+                True if direction vector points upwards
             r0: ndarray, shape (3, )
-                The location of the wire in units of d: [x y z]
+                The location of the solid in units of d: [x y z]
             rhoLimit: float
                 Minimal rho to calculate field for
         """
@@ -205,7 +177,6 @@ class InfiniteWire(CylindricallySymmetricSolid) :
             dBphidrho = -1./rho**2
             dBphidrho[rho<self.rhoLimit] = 0
             return res+(ZERO, ZERO, ZERO, dBphidrho, ZERO, ZERO, ZERO, ZERO, ZERO)
-            
 
 
 
@@ -249,8 +220,8 @@ class Coil(ArrayOfSources) :
         """
         Arguments
         ----------
-            n: ndarray, shape (3, )
-                The normal vector to the plane of the solid
+            n: bool
+                True if direction vector points upwards
             r0: ndarray, shape (3, )
                 The location of the centre of the trap
             R: float
@@ -300,8 +271,8 @@ class IoffeWires(ArrayOfSources) :
         """
         Arguments
         ---------
-            n: ndarray, shape (3, )
-                The diretion vector of the wires
+            n: bool
+                True if direction vector points upwards
             r0: ndarray, shape (3, )
                 The location of the centre
             m: ndarray, shape (3, )
