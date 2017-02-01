@@ -180,11 +180,11 @@ class InfiniteWire(CylindricallySymmetricSolid) :
             n: bool
                 True if direction vector points upwards
             r0: ndarray, shape (3, )
-                The location of the solid in units of d: [x y z]
+                The location of the solid in units of d: [x y]
             rhoLimit: float
                 Minimal rho to calculate field for
         """
-        super(InfiniteWire,self).__init__(n,r0)
+        super(InfiniteWire,self).__init__(n,[r0[0],r0[1],0])
         self.rhoLimit=rhoLimit
 
 
