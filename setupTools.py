@@ -100,9 +100,9 @@ def visualizeSequenceWithGravity(sequence,currents) :
     iTrans=np.arange(len(sequence))
     fig, axes = plt.subplots(ncols=3,nrows=2,figsize=(24,12))
     
-    def plotLine(i,j,m,n,*args) : axes[i][j].plot(iTrans,[s[m][n] for s in sequence], *args)
+    def plotLine(i,j,m,n,*args,**kwargs) : axes[i][j].plot(iTrans,[s[m][n] for s in sequence], *args, **kwargs)
         
-    plotLine(0,0,0,0)
+    plotLine(0,0,0,0,label="$x_0$")
     plotLine(0,1,0,1)
     plotLine(0,2,0,2)
     for i, s in zip(range(6,11),['b','b:','g','r','r:']) : plotLine(1,0,i,0,s)
