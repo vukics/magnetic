@@ -396,5 +396,3 @@ class HelmholtzCoil(ArrayOfSources) :
 
 
 
-def fieldNorm(source,*args) :
-    return lambda x, y, z : np.linalg.norm(source.calculateField(x,y,z,*args),axis=0)
