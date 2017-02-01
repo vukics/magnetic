@@ -376,4 +376,4 @@ def gradientOfNorm(B,Bnorm,Jacobian) :
 
 
 def fieldNorm(source,*args) :
-    return np.linalg.norm(source.calculateField(*args),axis=0)
+    return lambda x, y, z : np.linalg.norm(source.calculateField(x,y,z,*args),axis=0)
