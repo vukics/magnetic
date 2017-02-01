@@ -229,9 +229,9 @@ class ArrayOfSources(object) :
  
     def setCurrents(self,c) : self.relativeCurrents=c
     
-    def calculateField(self,r_mg) :
+    def calculateField(self,r_mg,calculateJacobian=False) :
         B = self.arrayOfSources[0].calculateField(r_mg)*self.relativeCurrents[0]
-        for x, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) : B += x.calculateField(r_mg)*I
+        for x, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) : B += x.calculateField(r_mg,calculateJacobian)*I
         return B
 
 
