@@ -385,5 +385,16 @@ def gradientOfNorm(B,Bnorm,Jacobian) :
 
 
 
+class HelmholtzCoil(ArrayOfSources) :
+    
+    def __init__(self,n,r0,R) :
+        r0=np.array(r0)
+        super(HelmholtzCoil,self).__init__([
+            CurrentLoop(n,r0+R/2.*nz(n),R),
+            CurrentLoop(n,r0-R/2.*nz(n),R)
+            ])
+
+
+
 def fieldNorm(source,*args) :
     return lambda x, y, z : np.linalg.norm(source.calculateField(x,y,z,*args),axis=0)
