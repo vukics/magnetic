@@ -37,7 +37,7 @@ def setupWith6Wires() :
 Setup=actualSetup()
 
 mu=.0671 # mK/G
-m_g=.10175   # mK/mm. This is the average isotope mass (87AMU)
+m_g=.10175   # mK/mm. This is the mass of the isotope Rb87 (87AMU)
 
 rhoCu=1.68e-5 # Ohm*mm
 
