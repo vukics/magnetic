@@ -329,7 +329,10 @@ def visualizeFieldMap(B,xcoord,ycoord,nLevels=40,Bmax=-1) :
 
     for i, title in zip(range(3),["$B_x$","$B_y$","$B_z$"]) :
         ax = axes.flatten()[i]
-        temp = ax.contour(xcoord, ycoord, np.transpose(B[i]), cmap=cm.Spectral, linewidths=3);
+        try :
+            temp = ax.contour(xcoord, ycoord, np.transpose(B[i]), cmap=cm.Spectral, linewidths=3);
+        except ValueError as e :
+            print("Axis "+title+":",e)
         ax.set_title(title)
         fig.colorbar(temp, ax=ax)
 
@@ -347,7 +350,7 @@ def visualizeFieldMap(B,xcoord,ycoord,nLevels=40,Bmax=-1) :
     xaxis.legend()
     
     yaxis=axes[1,2]; xmid=round(Bnorm.shape[0]/2)
-    yaxis.plot(ycoord,Bnorm[xmid,:])
+    yaxis.plot(ycoord,Bnorm[xmid,:],linewidth=3)
     for i in range(3) : yaxis.plot(ycoord,B[i,xmid,:])
 
     fig.tight_layout()
