@@ -63,19 +63,19 @@ def derivatives(f,x0,dx0,epsDeriv=1e-3) :
 
 # This is with gravitational potential energy
 def quadrupoleCharacteristicsWithGravity(x0,z0,offset=1, # offset from the minimum when looking for the maximum
-                                         epsDeriv=1e-3,stopIfMinimumNotFound=False) :
-    minimum = minimize(lambda x : potentialEnergy(x[0],0,x[1]), (x0,z0))
+                                         epsDeriv=1e-3,stopIfMinimumNotFound=True) :
+    minimum = minimize(lambda x : potentialEnergy(x[0],0,x[1]), (x0,z0), method='Nelder-Mead', options={'maxfev': 1000, 'maxiter': 1000})
     
     if stopIfMinimumNotFound :
         if not minimum.success : return minimum
     
     minx, minz = minimum.x
     fieldAtMinimum = Bnorm(minx,0,minz)
-    maxxr = minimize(lambda x : -potentialEnergy(x,0,minz), minx+offset)
-    maxxl = minimize(lambda x : -potentialEnergy(x,0,minz), minx-offset)
-    maxy = minimize(lambda y : -potentialEnergy(minx,y,minz), offset)
-    maxzu = minimize(lambda z : -potentialEnergy(minx,0,z), minz+offset)
-    maxzl = minimize(lambda z : -potentialEnergy(minx,0,z), minz-offset)
+    maxxr = minimize(lambda x : -potentialEnergy(x,0,minz), minx+offset, method='Nelder-Mead')
+    maxxl = minimize(lambda x : -potentialEnergy(x,0,minz), minx-offset, method='Nelder-Mead')
+    maxy = minimize(lambda y : -potentialEnergy(minx,y,minz), offset, method='Nelder-Mead')
+    maxzu = minimize(lambda z : -potentialEnergy(minx,0,z), minz+offset, method='Nelder-Mead')
+    maxzl = minimize(lambda z : -potentialEnergy(minx,0,z), minz-offset, method='Nelder-Mead')
     
     dx0r=epsDeriv*abs(maxxr.x[0]-minx)
     dx0l=epsDeriv*abs(maxxl.x[0]-minx)
