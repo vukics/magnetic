@@ -396,7 +396,7 @@ class QuadrupoleTrap(TwoCoils) :
 
 class DipoleCoils(TwoCoils) :
     """
-    Two instances of Coil with the same axis but opposite current directions
+    Two instances of Coil with the same axis and same current directions
     """
     
     def __init__(self,n,r0,R,w,nw,h,nh,d,relativeCurrents=None) :
