@@ -7,32 +7,29 @@ from scipy.misc import derivative
 import matplotlib.pyplot as plt
 
 
-
 # Everything is in mm and A, so the field is to be multiplied by 2 to get Gauss
+
+MOT_innerRadius=17; MOT_outerRadius=32
+origo=np.zeros(3); otherCenter=np.array([MOT_outerRadius,0,0])
+
+MOT=mg.QuadrupoleTrap(True,origo,MOT_innerRadius,MOT_outerRadius-MOT_innerRadius,13,10,12,42)
+transferCoil=mg.QuadrupoleTrap(True,otherCenter,13,11,7,6,7,24)
+compressionCoil=mg.QuadrupoleTrap(True,otherCenter,6,6,5,10,9,18)
+wires=mg.ArrayOfSources([mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],1.6,.025),
+                         mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],4.6,.025)
+                        ])
+
 def actualSetup() :
-    MOT_innerRadius=17; MOT_outerRadius=32
-    origo=np.zeros(3); otherCenter=np.array(origo); otherCenter[0]=MOT_outerRadius
-
-    MOT=mg.QuadrupoleTrap(True,origo,MOT_innerRadius,MOT_outerRadius-MOT_innerRadius,13,10,12,42)
-    transferCoil=mg.QuadrupoleTrap(True,otherCenter,13,11,7,6,7,24)
-    compressionCoil=mg.QuadrupoleTrap(True,otherCenter,6,6,5,10,9,18)
-    wires=mg.ArrayOfSources([mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],1.6,.025),
-                             mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],4.6,.025)
-                            ])
-
     return mg.ArrayOfSources([MOT,transferCoil,compressionCoil,wires],[5,0,0,12])
 
 
 def setupWith6Wires() :
-    MOT_innerRadius=17; MOT_outerRadius=32
-    origo=np.zeros(3); otherCenter=np.array(origo); otherCenter[0]=MOT_outerRadius
-
     res = actualSetup()
-    wires=mg.ArrayOfSources([mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],1.6,.025),
-                             mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],4.6,.025),
-                             mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],7.6,.025)
-                            ])
-    res.arrayOfSources[3]=wires
+    wiresNew=mg.ArrayOfSources([mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],1.6,.025),
+                                mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],4.6,.025),
+                                mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],7.6,.025)
+                                ])
+    res.arrayOfSources[3]=wiresNew
     return res
 
 
