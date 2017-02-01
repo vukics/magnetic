@@ -356,9 +356,30 @@ class Coil(ArrayOfSources) :
 
 
 
-class QuadrupoleTrap(ArrayOfSources) :
+class TwoCoils(ArrayOfSources) :
+    
+    def __init__(self,n1,n2,r0,R,w,nw,h,nh,d,relativeCurrents=None) :
+        """
+        Arguments
+        ---------
+            n1, n2 : the current orientation in Coil 1 and 2, respectively
+            r0, R, w, nw, h, nh: same as for Coil
+            d: float
+                The distance of the two coils
+        """
+        r0=np.array(r0)
+        super(TwoCoils,self).__init__([
+            Coil(n1,r0+d/2.*nz(n1),R,w,nw,h,nh),
+            Coil(n2,r0-d/2.*nz(n1),R,w,nw,h,nh)
+            ],relativeCurrents)
+        
+        self.d = d
+
+    
+    
+class QuadrupoleTrap(TwoCoils) :
     """
-    Two instances of Coil with the same orientation
+    Two instances of Coil with the same axis but opposite current directions
     """
     
     def __init__(self,n,r0,R,w,nw,h,nh,d,relativeCurrents=None) :
@@ -369,13 +390,24 @@ class QuadrupoleTrap(ArrayOfSources) :
             d: float
                 The distance of the two coils
         """
-        n=np.array(n); r0=np.array(r0)
-        super(QuadrupoleTrap,self).__init__([
-            Coil(    n,r0+d/2.*nz(n),R,w,nw,h,nh),
-            Coil(not n,r0-d/2.*nz(n),R,w,nw,h,nh)
-            ],relativeCurrents)
-        
-        self.d = d
+        super(QuadrupoleTrap,self).__init__(n,not n,r0,R,w,nw,h,nh,d,relativeCurrents)
+
+
+
+class DipoleCoils(TwoCoils) :
+    """
+    Two instances of Coil with the same axis but opposite current directions
+    """
+    
+    def __init__(self,n,r0,R,w,nw,h,nh,d,relativeCurrents=None) :
+        """
+        Arguments
+        ---------
+            n, r0, R, w, nw, h, nh: same as for Coil
+            d: float
+                The distance of the two coils
+        """
+        super(DipoleCoils,self).__init__(n,n,r0,R,w,nw,h,nh,d,relativeCurrents)
 
 
 
@@ -480,7 +512,6 @@ def gradientOfNorm(fieldDeriv) :
 
 
 class HelmholtzCoil(ArrayOfSources) :
-    
     def __init__(self,n,r0,R) :
         r0=np.array(r0)
         super(HelmholtzCoil,self).__init__([
