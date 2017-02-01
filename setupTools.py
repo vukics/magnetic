@@ -61,7 +61,7 @@ def derivatives(f,x0,dx0,epsDeriv=1e-3) :
 # This is with gravitational potential energy
 def quadrupoleCharacteristicsWithGravity(x0,z0,offset=1, # offset from the minimum when looking for the maximum
                                          epsDeriv=1e-3,stopIfMinimumNotFound=True) :
-    minimum = minimize(lambda x : potentialEnergy(x[0],0,x[1]), (x0,z0), method='Nelder-Mead', options={'maxfev': 1000, 'maxiter': 1000})
+    minimum = minimize(lambda x : potentialEnergy(x[0],0,x[1]), (x0,z0), method='Nelder-Mead', options={'maxfev': 10000, 'maxiter': 10000})
     
     if stopIfMinimumNotFound :
         if not minimum.success : return minimum
