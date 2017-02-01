@@ -360,3 +360,8 @@ def visualizeFieldMap(B,xcoord,ycoord,nLevels=40,Bmax=-1) :
 
 def gradientOfNorm(B,Bnorm,Jacobian) :
     return np.einsum("i...,ij...",B,Jacobian)/Bnorm
+
+
+
+def fieldNorm(source,*args) :
+    return np.linalg.norm(source.calculateField(*args),axis=0)
