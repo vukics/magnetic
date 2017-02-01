@@ -14,6 +14,13 @@ def matrixVector(m,v) : return np.einsum('ij...,j...->i...',m,v)
 
 def nz(n) : return np.array((0, 0, 1 if n else -1))
 
+def filterIndeces(a) :
+    try :
+        while True :
+            a=np.rollaxis(a,a.shape.index(1))[0]
+    except :
+        return a
+
 
 def symbolicForCurrentLoop() :
     import sympy as sp
@@ -77,24 +84,10 @@ class CylindricallySymmetricSolid(object) :
             (for I in amps and d in meters and mu = 4 pi * 10^-7 we get Tesla)
         """
         
-        arrayInputs=list()
-        arrayInputIndeces=list()
-        for i, xx in enumerate([x,y,z]) :
-            if type(xx).__module__ == np.__name__ :
-                arrayInputs.append(xx)
-                arrayInputIndeces.append(i)
-        if len(arrayInputs) > 1 :
-            r = np.meshgrid(*arrayInputs,indexing='ij')
-            i=0
-            if 0 in arrayInputIndeces :
-                x = r[0]
-                i += 1
-            if 1 in arrayInputIndeces :
-                y = r[i]
-                i += 1
-            if 2 in arrayInputIndeces :
-                z = r[i]
+        r = np.meshgrid(*[ (xx if type(xx).__module__ == np.__name__ else (float(xx)) ) for xx in [x,y,z] ],indexing='ij')
 
+        x = r[0]; y = r[1]; z = r[2]
+        
         # point location from center of coil
         for xx, x0 in zip([x,y,z],self.r0) : xx -= x0
 
@@ -112,8 +105,8 @@ class CylindricallySymmetricSolid(object) :
         # Rotate the field back in the lab’s frame. For this the axis representing space has to be rolled to the necessary position (and then rolled back)
 
         res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian))*self.direction
-        field = matrixVector(localTrans,res[:3])
-        
+        field = filterIndeces(matrixVector(localTrans,res[:3]))
+
         if (calculateJacobian) :
             localTransPhiDerivative = create3by3matrix(-S, -C, ZERO, C, -S, ZERO, ZERO, ZERO, ONE)
             
