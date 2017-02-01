@@ -295,6 +295,33 @@ class ArrayOfSources(object) :
 
 
 
+class InfiniteWireWithSquareCrossSection(ArrayOfSources) :
+    """
+    Implemented as an array of 5 point-like wires
+    """
+    def __init__(self,n,r0,direction,rhoLimit) :
+        """
+        Arguments
+        ----------
+            n: bool
+                True if direction vector points upwards
+            r0: ndarray, shape (2, )
+                The location of the centre of the square in units of d: [x y]
+            direction: ndarray, shape (2, )
+                The location vector of any of the sides of the square from the centre in units of d: [x y]
+            rhoLimit: float
+                Minimal rho to calculate field for
+        """
+        r0=r0[:2]
+        direction=direction[:2]; directionRot=np.array((-direction[1],direction[0]))
+        diagonal=direction+directionRot; diagonalRot=direction-directionRot
+        super(InfiniteWireWithSquareCrossSection,self).__init__([InfiniteWire(n,rIter,rhoLimit) for rIter in [r0,r0+diagonal,r0-diagonal,r0+diagonalRot,r0-diagonalRot]],
+                                                                0.2*np.ones(5)
+                                                                )
+        self.rhoLimit=rhoLimit
+
+
+
 class Coil(ArrayOfSources) :
     """
     Coil with rectangular cross section
