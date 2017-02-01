@@ -200,7 +200,7 @@ class ArrayOfSources(object) :
         self.relativeCurrents = np.ones(len(arrayOfSources)) if relativeCurrents==None else relativeCurrents
  
  
-    def setCurrents(self,c) : self.relativeCurrents=c
+    def setCurrents(self,*c) : self.relativeCurrents=c
     
     def calculateField(self,r_mg,calculateJacobian=False) :
         B = self.arrayOfSources[0].calculateField(r_mg)*self.relativeCurrents[0]
