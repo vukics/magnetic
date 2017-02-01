@@ -118,7 +118,8 @@ class CylindricallySymmetricSolid(object) :
             zderivs = matrixVector(localTrans,res[5::3])
             
             return field, create3by3matrix(xderivs[0],yderivs[0],zderivs[0],xderivs[1],yderivs[1],zderivs[1],xderivs[2],yderivs[2],zderivs[2])
-        else : return field
+        else :
+            return field
 
 
 
