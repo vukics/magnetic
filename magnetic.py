@@ -4,6 +4,8 @@ from scipy import special
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
+import math
+
 
 
 def create3by3matrix(a00,a01,a02,a10,a11,a12,a20,a21,a22) : return np.array((np.array((a00,a01,a02)), np.array((a10,a11,a12)), np.array((a20,a21,a22))))
@@ -285,7 +287,34 @@ class IoffeWires(ArrayOfSources) :
             InfiniteWire( n,r0+d/2.*m,rhoLimit),
             InfiniteWire(-n,r0-d/2.*m,rhoLimit)
             ],relativeCurrents)
+
+
+
+class QuadrupoleSimplex(ArrayOfSources) :
+    """
+    From two loops mostly for testing
+    """
+    def __init__(self,n,r0,R,d,relativeCurrents=None) :
+        """
+        Arguments
+        ---------
+            n, r0, R: same as for CurrentLoop
+            d: float
+                The distance of the two loops
+        """
+        n=np.array(n); r0=np.array(r0)
+        super(QuadrupoleSimplex,self).__init__([
+            CurrentLoop(    n,r0+d/2.*nz(n),R),
+            CurrentLoop(not n,r0-d/2.*nz(n),R)
+            ],relativeCurrents)
         
+        self.d = d
+    
+    
+    def coefficient(self) :
+        A = self.d/2
+        R = self.arrayOfSources[0].R
+        return 3*math.pi*A*R**2/(R**2+A**2)**2.5
 
 
 
