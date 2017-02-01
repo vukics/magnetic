@@ -12,6 +12,7 @@ def create3by3matrix(a00,a01,a02,a10,a11,a12,a20,a21,a22) : return np.array((np.
 
 def matrixVector(m,v) : return np.einsum('ij...,j...->i...',m,v)
 
+def nz(n) : return np.array((0, 0, 1 if n else -1))
 
 
 def symbolicForCurrentLoop() :
@@ -37,6 +38,9 @@ def symbolicForCurrentLoop() :
                         modules=[{"elliptic_k": special.ellipk, "elliptic_e": special.ellipe},"numpy"])
 
     return _doLambdify(Bz), _doLambdify(Brho), _doLambdify(diff(Brho,rho)), _doLambdify(diff(Brho,z)), _doLambdify(diff(Bz,rho)), _doLambdify(diff(Bz,z))
+
+
+currentLoopExpressions = symbolicForCurrentLoop()
 
 
 
@@ -131,11 +135,9 @@ class CurrentLoop(CylindricallySymmetricSolid) :
 
         self.R = R
 
-        self.expressions = symbolicForCurrentLoop()
-
 
     def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z,calculateJacobian) :
-        e = self.expressions
+        e = currentLoopExpressions
         Bz = e[0](z,rho,self.R)
         Brho = e[1](z,rho,self.R)
         # On the axis of the coil we get a division by zero here. This returns a NaN where the field is actually zero :
@@ -239,7 +241,7 @@ class Coil(ArrayOfSources) :
         
         There are no relative currents here, as the same current will flow in all loops
         """
-        super(Coil,self).__init__([CurrentLoop(n,r0+i*n,Rj) for i in np.linspace(-h/2.,h/2.,nh) for Rj in np.linspace(R,R+w,nw)])
+        super(Coil,self).__init__([CurrentLoop(n,r0+i*nz(n),Rj) for i in np.linspace(-h/2.,h/2.,nh) for Rj in np.linspace(R,R+w,nw)])
 
 
 
@@ -258,9 +260,11 @@ class QuadrupoleTrap(ArrayOfSources) :
         """
         n=np.array(n); r0=np.array(r0)
         super(QuadrupoleTrap,self).__init__([
-            Coil( n,r0+d/2.*n,R,w,nw,h,nh),
-            Coil(-n,r0-d/2.*n,R,w,nw,h,nh)
+            Coil(    n,r0+d/2.*nz(n),R,w,nw,h,nh),
+            Coil(not n,r0-d/2.*nz(n),R,w,nw,h,nh)
             ],relativeCurrents)
+        
+        self.d = d
 
 
 
@@ -284,8 +288,8 @@ class IoffeWires(ArrayOfSources) :
         """
         n=np.array(n); r0=np.array(r0); m=np.array(m)
         super(IoffeWires,self).__init__([
-            InfiniteWire( n,r0+d/2.*m,rhoLimit),
-            InfiniteWire(-n,r0-d/2.*m,rhoLimit)
+            InfiniteWire(    n,r0+d/2.*m,rhoLimit),
+            InfiniteWire(not n,r0-d/2.*m,rhoLimit)
             ],relativeCurrents)
 
 
@@ -331,10 +335,10 @@ def visualizeFieldMap(B,xcoord,ycoord,nLevels=40,Bmax=-1) :
         ax = axes.flatten()[i]
         try :
             temp = ax.contour(xcoord, ycoord, np.transpose(B[i]), cmap=cm.Spectral, linewidths=3);
+            ax.set_title(title)
+            fig.colorbar(temp, ax=ax)
         except ValueError as e :
             print("Axis "+title+":",e)
-        ax.set_title(title)
-        fig.colorbar(temp, ax=ax)
 
     BnormAxis=axes[1,0]
     
