@@ -118,6 +118,8 @@ class CylindricallySymmetricSolid(object) :
             
             jacobian = filterIndeces(create3by3matrix(xderivs[0],yderivs[0],zderivs[0],xderivs[1],yderivs[1],zderivs[1],xderivs[2],yderivs[2],zderivs[2]))
             
+            for i in 0, 1 : jacobian[2,i]=jacobian[i,2] # ???
+                        
             return field, jacobian
         else :
             return field
