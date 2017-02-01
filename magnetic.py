@@ -209,11 +209,12 @@ class ArrayOfSources(object) :
         self.relativeCurrents = np.ones(len(arrayOfSources)) if relativeCurrents==None else relativeCurrents
  
  
-    def setCurrents(self,*c) : self.relativeCurrents=c
+    def setCurrents(self,*c) : self.relativeCurrents[:len(c)]=c
     
-    def calculateField(self,x,y,z,calculateJacobian=False) :
-        B = self.arrayOfSources[0].calculateField(x,y,z,calculateJacobian)*self.relativeCurrents[0]
-        for x, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) : B += x.calculateField(x,y,z,calculateJacobian)*I
+    def calculateField(self,x,y,z) :
+        B = self.arrayOfSources[0].calculateField(x,y,z)*self.relativeCurrents[0]
+        for source, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) : 
+            if not I==0 : B += source.calculateField(x,y,z)*I
         return B
 
 
