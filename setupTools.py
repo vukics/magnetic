@@ -40,7 +40,9 @@ def setupWith6Wires() :
 Setup=actualSetup()
 
 mu=.0671 # mK/G
-m_g=.1    # mK/mm
+m_g=.10175   # mK/mm. This is the average isotope mass (87AMU)
+
+rhoCu=1.68e-5 # Ohm*mm
 
 Bnorm = lambda x, y, z : np.linalg.norm(2*Setup.calculateField(x,y,z),axis=0)
 potentialEnergy = lambda x, y, z : mu*Bnorm(x,y,z)+m_g*z
@@ -148,7 +150,7 @@ def visualizeSequenceWithoutGravity(sequence,currents) :
 
 
 def frequencyFromSecondDerivative(sd) : #  sd given in mK/mm^2
-    return (8.34*sd/0.08546*1e3)**.5/6.28
+    return (9.555e4*sd)**.5/6.28
 
 
 
