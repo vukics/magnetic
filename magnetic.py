@@ -397,7 +397,7 @@ class IoffeWires(ArrayOfSources) :
             d: float
                 The distance of the two wires
         """
-        n=np.array(n); r0=np.array(r0); m=np.array(m)
+        r0=np.array(r0); m=np.array(m)
         super(IoffeWires,self).__init__([
             InfiniteWire(    n,r0+d/2.*m,rhoLimit),
             InfiniteWire(not n,r0-d/2.*m,rhoLimit)
