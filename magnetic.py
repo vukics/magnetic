@@ -215,11 +215,17 @@ class ArrayOfSources(object) :
  
     def setCurrents(self,*c) : self.relativeCurrents[:len(c)]=c
     
+    def helper(self,function) :
+        res = function(self.arrayOfSources[0])*self.relativeCurrents[0] # this should also be eliminated if the current is 0!
+        for source, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) :
+            if not I==0 : res += function(source)*I
+        return res
+    
     def calculateField(self,x,y,z,calculateJacobian=False) :
-        B = self.arrayOfSources[0].calculateField(x,y,z,calculateJacobian)*self.relativeCurrents[0]
-        for source, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) : 
-            if not I==0 : B += source.calculateField(x,y,z,calculateJacobian)*I
-        return B
+        if not calculateJacobian :
+            return self.helper(lambda source : source.calculateField(x,y,z,calculateJacobian))
+        else :
+            return tuple( self.helper(lambda source : source.calculateField(x,y,z,calculateJacobian)[i]) for i in (0,1) )
 
 
 
