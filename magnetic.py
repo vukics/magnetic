@@ -324,7 +324,7 @@ class QuadrupoleSimplex(ArrayOfSources) :
             d: float
                 The distance of the two loops
         """
-        n=np.array(n); r0=np.array(r0)
+        r0=np.array(r0)
         super(QuadrupoleSimplex,self).__init__([
             CurrentLoop(    n,r0+d/2.*nz(n),R),
             CurrentLoop(not n,r0-d/2.*nz(n),R)
