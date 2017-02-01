@@ -23,6 +23,19 @@ def actualSetup() :
     return mg.ArrayOfSources([MOT,transferCoil,compressionCoil,wires],[5,0,0,12])
 
 
+def setupWith6Wires() :
+    MOT_innerRadius=17; MOT_outerRadius=32
+    origo=np.zeros(3); otherCenter=np.array(origo); otherCenter[0]=MOT_outerRadius
+
+    res = actualSetup()
+    wires=mg.ArrayOfSources([mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],1.6,.025),
+                             mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],4.6,.025),
+                             mg.IoffeWires(True,otherCenter+np.array([3,0,0]),[0,1,0],7.6,.025)
+                            ])
+    res.arrayOfSources[3]=wires
+    return res
+
+
 
 Setup=actualSetup()
 
