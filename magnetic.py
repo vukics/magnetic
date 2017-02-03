@@ -71,7 +71,7 @@ class CylindricallySymmetricSolid(object) :
         self.direction = 1 if n else -1
         
 
-    def calculateField(self,x,y,z,calculateJacobian=False) :        
+    def calculateField(self,x,y,z) :
         """
         Arguments
         ----------
@@ -103,26 +103,9 @@ class CylindricallySymmetricSolid(object) :
 
         # Rotate the field back in the lab’s frame.
 
-        res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian))*self.direction
-        field = filterIndeces(matrixVector(localTrans,res[:3]))
+        res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z))*self.direction
 
-        if (calculateJacobian) :
-            localTransPhiDerivative = create3by3matrix(-S, -C, ZERO, C, -S, ZERO, ZERO, ZERO, ONE)
-            
-            rhoDerivs = res[3::3]
-            phiDerivs = res[4::3]
-            
-            xderivs = -y/rho**2*matrixVector(localTransPhiDerivative,res[:3])+matrixVector(localTrans,(x/rho*rhoDerivs-y/rho**2*phiDerivs))
-            yderivs =  x/rho**2*matrixVector(localTransPhiDerivative,res[:3])+matrixVector(localTrans,(y/rho*rhoDerivs+x/rho**2*phiDerivs))
-            zderivs = matrixVector(localTrans,res[5::3])
-            
-            jacobian = filterIndeces(create3by3matrix(xderivs[0],yderivs[0],zderivs[0],xderivs[1],yderivs[1],zderivs[1],xderivs[2],yderivs[2],zderivs[2]))
-            
-            for i in 0, 1 : jacobian[2,i]=jacobian[i,2] # ???
-                        
-            return field, jacobian
-        else :
-            return field
+        return filterIndeces(matrixVector(localTrans,res[:3]))
 
 
 
@@ -147,7 +130,7 @@ class CurrentLoop(CylindricallySymmetricSolid) :
         self.R = R
 
 
-    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z,calculateJacobian) :
+    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z) :
         e = currentLoopExpressions
         Bz = e[0](z,rho,self.R)
         Brho = e[1](z,rho,self.R)
@@ -155,9 +138,7 @@ class CurrentLoop(CylindricallySymmetricSolid) :
         Brho[np.isnan(Brho)] = 0; Brho[np.isinf(Brho)] = 0
         Bz  [np.isnan(Bz)]   = 0; Bz  [np.isinf(Bz)]   = 0
 
-        ZERO = np.zeros(Brho.shape); res = (Brho, ZERO, Bz)
-        
-        return res if not calculateJacobian else res+(e[2](z,rho,self.R),ZERO,e[3](z,rho,self.R),ZERO,ZERO,ZERO,e[4](z,rho,self.R),ZERO,e[5](z,rho,self.R))
+        return (Brho, np.zeros(Brho.shape), Bz)
 
 
     def thermalPowerCoeff(self,r) :
@@ -188,17 +169,13 @@ class InfiniteWire(CylindricallySymmetricSolid) :
         self.rhoLimit=rhoLimit
 
 
-    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z,calculateJacobian) :
+    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z) :
         Bphi = 1./rho
         Bphi[rho<self.rhoLimit] = 0
         
-        ZERO = np.zeros(Bphi.shape); res = (ZERO, Bphi, ZERO)
+        ZERO = np.zeros(Bphi.shape)
         
-        if not calculateJacobian : return res
-        else :
-            dBphidrho = -1./rho**2
-            dBphidrho[rho<self.rhoLimit] = 0
-            return res+(ZERO, ZERO, ZERO, dBphidrho, ZERO, ZERO, ZERO, ZERO, ZERO)
+        return (ZERO, Bphi, ZERO)
 
 
     def thermalPowerCoeff(self,r) :
@@ -211,7 +188,6 @@ class CoilNew(CylindricallySymmetricSolid) :
     Coil with rectangular cross section
     
     It is now implemented in terms of a CylindricallySymmetricSolid rather than ArrayOfSources
-    At the moment, it cannot calculate Jacobian
     """
     
     def __init__(self,n,r0,R,w,nw,h,nh) :
@@ -240,15 +216,15 @@ class CoilNew(CylindricallySymmetricSolid) :
         self.loops=[CurrentLoop(n,r0+i*nz(n),Rj) for i in np.linspace(-h/2.,h/2.,nh) for Rj in np.linspace(R,R+w,nw)]
 
 
-    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z,calculateJacobian) :
-        midres=self.loops[0].calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian)
+    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z) :
+        midres=self.loops[0].calculateFieldInOwnCylindricalCoordinates(rho,phi,z)
         Brho=midres[0]; Bz=midres[2]
         for source in self.loops[1:] :
-            midres=source.calculateFieldInOwnCylindricalCoordinates(rho,phi,z,calculateJacobian)
+            midres=source.calculateFieldInOwnCylindricalCoordinates(rho,phi,z)
             Brho+=midres[0]; Bz+=midres[2]
 
-        ZERO = np.zeros(Brho.shape); res = (Brho, ZERO, Bz)
-        return res
+        ZERO = np.zeros(Brho.shape)
+        return (Brho, ZERO, Bz)
 
 
 
@@ -273,18 +249,11 @@ class ArrayOfSources(object) :
     def setCurrents(self,*c) : self.relativeCurrents[:len(c)]=c
 
 
-    def helper(self,function) :
-        res = function(self.arrayOfSources[0])*self.relativeCurrents[0] # this should also be eliminated if the current is 0!
+    def calculateField(self,x,y,z) :
+        res = 0. if self.relativeCurrents[0]==0 else self.arrayOfSources[0].calculateField(x,y,z)*self.relativeCurrents[0]
         for source, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) :
-            if not I==0 : res += function(source)*I
+            if not I==0 : res += source.calculateField(x,y,z)*I
         return res
-
-
-    def calculateField(self,x,y,z,calculateJacobian=False) :
-        if not calculateJacobian :
-            return self.helper(lambda source : source.calculateField(x,y,z,calculateJacobian))
-        else :
-            return tuple( self.helper(lambda source : source.calculateField(x,y,z,calculateJacobian)[i]) for i in (0,1) )
 
 
     def thermalPowerCoeff(self,r) :
