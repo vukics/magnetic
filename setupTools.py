@@ -1,4 +1,4 @@
-import magnetic as mg
+import magneticComposites as mg
 import numpy as np
 
 from scipy.optimize import minimize
