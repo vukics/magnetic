@@ -10,6 +10,8 @@ def create3by3matrix(a00,a01,a02,a10,a11,a12,a20,a21,a22) : return np.array((np.
 
 def matrixVector(m,v) : return np.einsum('ij...,j...->i...',m,v)
 
+def xyz2meshgrid(x,y,z) : return np.meshgrid(*[ (xx if type(xx).__module__ == np.__name__ else (float(xx)) ) for xx in [x,y,z] ],indexing='ij')
+
 def filterIndeces(a) :
     try :
         while True :
@@ -65,13 +67,13 @@ class CylindricallySymmetricSolid(object) :
         self.r0 = r0;
 
         self.direction = 1 if n else -1
-        
+
 
     def calculateField(self,x,y,z) :
         """
         Arguments
         ----------
-            r: list of x, y, z coordinates that can be array_like types
+            x, y, z: coordinates that can be either floats or array_like types
 
         Returns
         --------
@@ -79,9 +81,10 @@ class CylindricallySymmetricSolid(object) :
             a vector for the B field at each position specified in r in inverse units of (mu I) / (2 pi d)
             (for I in amps and d in meters and mu = 4 pi * 10^-7 we get Tesla)
         """
-        
-        r = np.meshgrid(*[ (xx if type(xx).__module__ == np.__name__ else (float(xx)) ) for xx in [x,y,z] ],indexing='ij')
+        return filterIndeces(self.calculateFieldOnMeshgrid(xyz2meshgrid(x,y,z)))
 
+
+    def calculateFieldOnMeshgrid(self,r) :
         x = r[0]; y = r[1]; z = r[2]
         
         # point location from center of coil
@@ -99,9 +102,7 @@ class CylindricallySymmetricSolid(object) :
 
         # Rotate the field back in the lab’s frame.
 
-        res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z))*self.direction
-
-        return filterIndeces(matrixVector(localTrans,res[:3]))
+        return matrixVector(localTrans,(np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z))*self.direction)[:3])
 
 
 
@@ -201,9 +202,13 @@ class ArrayOfSources(object) :
 
 
     def calculateField(self,x,y,z) :
-        res = 0. if self.relativeCurrents[0]==0 else self.arrayOfSources[0].calculateField(x,y,z)*self.relativeCurrents[0]
+        return filterIndeces(self.calculateFieldOnMeshgrid(xyz2meshgrid(x,y,z)))
+
+
+    def calculateFieldOnMeshgrid(self,r) :
+        res = 0. if self.relativeCurrents[0]==0 else self.arrayOfSources[0].calculateFieldOnMeshgrid(r)*self.relativeCurrents[0]
         for source, I in zip(self.arrayOfSources[1:],self.relativeCurrents[1:]) :
-            if not I==0 : res += source.calculateField(x,y,z)*I
+            if not I==0 : res += source.calculateFieldOnMeshgrid(r)*I
         return res
 
 
