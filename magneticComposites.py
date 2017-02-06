@@ -11,50 +11,6 @@ def nz(n) : return np.array((0, 0, 1 if n else -1))
 ArrayOfSources=magneticElements.ArrayOfSources
 
 
-class CoilNew(magneticElements.CylindricallySymmetricSolid) :
-    """
-    Coil with rectangular cross section
-    
-    It is now implemented in terms of a CylindricallySymmetricSolid rather than ArrayOfSources
-    """
-    
-    def __init__(self,n,r0,R,w,nw,h,nh) :
-        """
-        Arguments
-        ----------
-            n: bool
-                True if direction vector points upwards
-            r0: ndarray, shape (3, )
-                The location of the centre of the trap
-            R: float
-                Inner radius
-            w: float
-                The width of the rectangular cross section
-            nw: float
-                Number of loops along width
-            h: float
-                The height of the rectangular cross section
-            nh: float
-                Number of loops along height
-        
-        There are no relative currents here, as the same current will flow in all loops
-        """
-        super(CoilNew,self).__init__(n,r0)
-
-        self.loops=[magneticElements.CurrentLoop(n,r0+i*nz(n),Rj) for i in np.linspace(-h/2.,h/2.,nh) for Rj in np.linspace(R,R+w,nw)]
-
-
-    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z) :
-        midres=self.loops[0].calculateFieldInOwnCylindricalCoordinates(rho,phi,z)
-        Brho=midres[0]; Bz=midres[2]
-        for source in self.loops[1:] :
-            midres=source.calculateFieldInOwnCylindricalCoordinates(rho,phi,z)
-            Brho+=midres[0]; Bz+=midres[2]
-
-        ZERO = np.zeros(Brho.shape)
-        return (Brho, ZERO, Bz)
-
-
 
 class Coil(ArrayOfSources) :
     """
