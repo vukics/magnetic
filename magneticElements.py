@@ -71,7 +71,7 @@ class CylindricallySymmetricSolid(object) :
         """
         Arguments
         ----------
-            r: list of x, y, z coordinates that can be array_like types
+            x, y, z: coordinates that can be either floats or array_like types
 
         Returns
         --------
