@@ -10,6 +10,7 @@ def nz(n) : return np.array((0, 0, 1 if n else -1))
 
 ArrayOfSources=magneticElements.ArrayOfSources
 
+visualizeFieldMap=magneticElements.visualizeFieldMap
 
 
 class Coil(ArrayOfSources) :
