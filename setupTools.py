@@ -1,3 +1,5 @@
+# Copyright (c) 2016-2017 András Vukics (http://github.com/vukics). Distributed under the MIT Licence (See accompanying file LICENSE)
+
 import magneticComposites as mg
 import numpy as np
 

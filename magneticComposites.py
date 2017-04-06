@@ -1,3 +1,5 @@
+# Copyright (c) 2016-2017 András Vukics (http://github.com/vukics). Distributed under the MIT Licence (See accompanying file LICENSE)
+
 import magneticElements
 
 import numpy as np
