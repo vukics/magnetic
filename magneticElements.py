@@ -146,6 +146,37 @@ class CurrentLoop(CylindricallySymmetricSolid) :
 
 
 
+class PointLikeDipole(CylindricallySymmetricSolid) :
+    """
+    Calculates the magnetic field of a point-like dipole
+    using Eq. (5.41) of Jackson: Classical Electrodynamics. Wiley, New York, NY, 2nd ed., (1975)
+    """
+    
+    def __init__(self,n,r0,m) :
+        """
+        Arguments
+        ----------
+            n: same as with CylindricallySymmetricSolid
+            r0: ”
+            m: float
+                The dipole moment
+        """
+        super(PointLikeDipole,self).__init__(n,r0)
+        
+        self.m = m
+    
+    
+    def calculateFieldInOwnCylindricalCoordinates(self,rho,phi,z) :
+        distanceToTheFifth=(rho**2+z**2)**2.5
+        Brho=3*self.m*rho*z/distanceToTheFifth/2
+        Bz=self.m*(2*z**2-rho**2)/distanceToTheFifth/2
+        Brho[np.isnan(Brho)] = 0; Brho[np.isinf(Brho)] = 0
+        Bz  [np.isnan(Bz)]   = 0; Bz  [np.isinf(Bz)]   = 0
+        
+        return (Brho, np.zeros(Brho.shape), Bz)
+
+
+
 class InfiniteWire(CylindricallySymmetricSolid) :
     """
     Calculates the magnetic field of an infinite wire using Eqs. (4) and (5) in Phys Rev A 35:1535-1546(1987)
