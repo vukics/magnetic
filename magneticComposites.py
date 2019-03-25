@@ -7,8 +7,9 @@ import numpy as np
 import math
 
 
-def nz(n) : return np.array((0, 0, 1 if n else -1))
+def nz(n) : return np.array((0, 0, 1 if n else -1)) if type(n)==bool else n
 
+def inverseOf(n) : return not n if type(n)==bool else -1*n
 
 ArrayOfSources=magneticElements.ArrayOfSources
 
@@ -28,8 +29,9 @@ class Coil(ArrayOfSources) :
         """
         Arguments
         ----------
-            n: bool
-                True if direction vector points upwards
+            n: bool or ndarray, shape (3,)
+                Direction vector of the axis of the solid
+                If boolean, then the axis lies along the z direction (True if direction vector points upwards)
             r0: ndarray, shape (3, )
                 The location of the centre of the trap
             R: float
@@ -51,19 +53,19 @@ class Coil(ArrayOfSources) :
 
 class TwoCoils(ArrayOfSources) :
     
-    def __init__(self,n1,n2,r0,R,w,nw,h,nh,d,relativeCurrents=None) :
+    def __init__(self,n1,n2,r0,R,w,nw,h,nh,d,relativeCurrents=None,WhichCoil=Coil,**kwargs) :
         """
         Arguments
         ---------
-            n1, n2 : the current orientation in Coil 1 and 2, respectively
+            n1, n2 : the axis orientation in Coil 1 and 2, respectively
             r0, R, w, nw, h, nh: same as for Coil
             d: float
                 The distance of the two coils
         """
         r0=np.array(r0)
         super(TwoCoils,self).__init__([
-            Coil(n1,r0+d/2.*nz(n1),R,w,nw,h,nh),
-            Coil(n2,r0-d/2.*nz(n1),R,w,nw,h,nh)
+            WhichCoil(n1,r0+d/2.*nz(n1),R,w,nw,h,nh,**kwargs),
+            WhichCoil(n2,r0-d/2.*nz(n1),R,w,nw,h,nh,**kwargs)
             ],relativeCurrents)
         
         self.d = d
@@ -75,7 +77,7 @@ class DipoleCoils(TwoCoils) :
     Two instances of Coil with the same axis and same current directions
     """
     
-    def __init__(self,n,r0,R,w,nw,h,nh,d,relativeCurrents=None) :
+    def __init__(self,n,r0,R,w,nw,h,nh,d,relativeCurrents=None,WhichCoil=Coil,**kwargs) :
         """
         Arguments
         ---------
@@ -83,7 +85,7 @@ class DipoleCoils(TwoCoils) :
             d: float
                 The distance of the two coils
         """
-        super(DipoleCoils,self).__init__(n,n,r0,R,w,nw,h,nh,d,relativeCurrents)
+        super(DipoleCoils,self).__init__(n,n,r0,R,w,nw,h,nh,d,relativeCurrents,WhichCoil,**kwargs)
 
 
 
@@ -92,7 +94,7 @@ class QuadrupoleTrap(TwoCoils) :
     Two instances of Coil with the same axis but opposite current directions
     """
     
-    def __init__(self,n,r0,R,w,nw,h,nh,d,relativeCurrents=None) :
+    def __init__(self,n,r0,R,w,nw,h,nh,d,relativeCurrents=None,WhichCoil=Coil,**kwargs) :
         """
         Arguments
         ---------
@@ -100,7 +102,7 @@ class QuadrupoleTrap(TwoCoils) :
             d: float
                 The distance of the two coils
         """
-        super(QuadrupoleTrap,self).__init__(n,not n,r0,R,w,nw,h,nh,d,relativeCurrents)
+        super(QuadrupoleTrap,self).__init__(n,inverseOf(n),r0,R,w,nw,h,nh,d,relativeCurrents,WhichCoil,**kwargs)
 
 
 
@@ -113,8 +115,9 @@ class IoffeWires(ArrayOfSources) :
         """
         Arguments
         ---------
-            n: bool
-                True if direction vector points upwards
+            n: bool or ndarray, shape (3,)
+                Direction vector of the wire
+                If boolean, then it lies along the z direction (True if direction vector points upwards)
             r0: ndarray, shape (3, )
                 The location of the centre
             m: ndarray, shape (3, )
@@ -124,8 +127,8 @@ class IoffeWires(ArrayOfSources) :
         """
         r0=np.array(r0); m=np.array(m)
         super(IoffeWires,self).__init__([
-            magneticElements.InfiniteWire(    n,r0+d/2.*m,rhoLimit),
-            magneticElements.InfiniteWire(not n,r0-d/2.*m,rhoLimit)
+            magneticElements.InfiniteWire(          n ,r0+d/2.*m,rhoLimit),
+            magneticElements.InfiniteWire(inverseOf(n),r0-d/2.*m,rhoLimit)
             ],relativeCurrents)
 
 
@@ -144,8 +147,8 @@ class QuadrupoleSimplex(ArrayOfSources) :
         """
         r0=np.array(r0)
         super(QuadrupoleSimplex,self).__init__([
-            magneticElements.CurrentLoop(    n,r0+d/2.*nz(n),R),
-            magneticElements.CurrentLoop(not n,r0-d/2.*nz(n),R)
+            magneticElements.CurrentLoop(          n ,r0+d/2.*nz(n),R),
+            magneticElements.CurrentLoop(inverseOf(n),r0-d/2.*nz(n),R)
             ],relativeCurrents)
         
         self.d = d
@@ -176,8 +179,9 @@ class InfiniteWireWithSquareCrossSection(ArrayOfSources) :
         """
         Arguments
         ----------
-            n: bool
-                True if direction vector points upwards
+            n: bool or ndarray, shape (3,)
+                Direction vector of the wire
+                If boolean, then it lies along the z direction (True if direction vector points upwards)
             r0: ndarray, shape (2, )
                 The location of the centre of the square in units of d: [x y]
             direction: ndarray, shape (2, )

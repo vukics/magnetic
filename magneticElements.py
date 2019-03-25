@@ -6,6 +6,7 @@ from scipy import special
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
+from math import copysign
 
 
 def create3by3matrix(a00,a01,a02,a10,a11,a12,a20,a21,a22) : return np.array((np.array((a00,a01,a02)), np.array((a10,a11,a12)), np.array((a20,a21,a22))))
@@ -18,6 +19,30 @@ def filterIndeces(a) :
             a=np.rollaxis(a,a.shape.index(1))[0]
     except :
         return a
+
+
+def transformation(n) :
+    """
+        Parameters
+        -----------
+        n: ndarray, shape (3,)
+            A vector giving direction of the basis
+
+        Returns
+        -----------
+        transformation matrix lab frame => own frame / or boolean if n lies along the z direction
+
+    """
+    n = n / np.linalg.norm(n) # normalize n
+
+    if  n[0]==0 and n[1]==0  : return copysign(1,n[2]) # n lies along the z direction
+
+    # else choose two vectors perpendicular to n (choice is arbitrary since the solid is symetric about n)
+    l = np.array((-n[1],n[0],0))
+
+    l = l / np.linalg.norm(l)
+    m = np.cross(n, l)
+    return np.vstack((l,m,n))
 
 
 def symbolicForCurrentLoop() :
@@ -58,16 +83,24 @@ class CylindricallySymmetricSolid(object) :
         """
         Arguments
         ----------
-            n: bool
-                True if direction vector points upwards
-            r0: ndarray, shape (3, )
+            n: bool or ndarray, shape (3,)
+                Direction vector of the axis of the solid
+                If boolean, then the axis lies along the z direction (True if direction vector points upwards)
+            r0: ndarray, shape (3,)
                 The location of the solid in units of d: [x y z]
         """
-      
+
+        
+        if type(n)==bool : self.transformation=1 if n else -1
+        elif n[0]==0 and n[1]==0 : self.transformation=1 if n[2]>0 else -1
+        else : self.transformation=transformation(n)
+
+        self.matrixTransformation=(not type(self.transformation)==int)
+        
+        if self.matrixTransformation : self.transformationInv=np.linalg.inv(self.transformation)
+
         self.r0 = r0;
 
-        self.direction = 1 if n else -1
-        
 
     def calculateField(self,x,y,z) :
         """
@@ -84,26 +117,29 @@ class CylindricallySymmetricSolid(object) :
         
         r = np.meshgrid(*[ (xx if type(xx).__module__ == np.__name__ else (float(xx)) ) for xx in [x,y,z] ],indexing='ij')
 
+        # point location from center of coil
+        for i in range(3) : r[i]-=self.r0[i]
+        
+        # transform vector to coil frame
+        if self.matrixTransformation : r=matrixVector(self.transformation,r)
+
         x = r[0]; y = r[1]; z = r[2]
         
-        # point location from center of coil
-        for xx, x0 in zip([x,y,z],self.r0) : xx -= x0
-
-        #### calculate field
-
         # express the coordinates in polar form
         rho = np.sqrt(x**2 + y**2)
         phi = np.arctan2(y,x)
         
         C=np.cos(phi); S=np.sin(phi); ZERO=np.zeros(phi.shape); ONE=np.ones(phi.shape)
         
+        ### self.direction (which should be now either a +/- 1, or a matrix), should be fused into localTrans
         localTrans = create3by3matrix(C, -S, ZERO,  S, C, ZERO, ZERO, ZERO, ONE) # shape (Nrow, Ncol, Nx, Ny, Nz) = (3,3,Nx,Ny,Nz)
+        fullTrans = np.einsum('ij,jk...->ik...',self.transformationInv,localTrans) if self.matrixTransformation else localTrans*self.transformation
 
         # Rotate the field back in the lab’s frame.
 
-        res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z))*self.direction
-
-        return filterIndeces(matrixVector(localTrans,res[:3]))
+        res = np.array(self.calculateFieldInOwnCylindricalCoordinates(rho,phi,z))
+        
+        return filterIndeces(matrixVector(fullTrans,res))
 
 
 
@@ -116,10 +152,8 @@ class CurrentLoop(CylindricallySymmetricSolid) :
         """
         Arguments
         ----------
-            n: bool
-                True if direction vector points upwards
-            r0: ndarray, shape (3, )
-                The location of the solid in units of d: [x y z]
+            n: same as with CylindricallySymmetricSolid
+            r0: ”
             R: float
                 The radius of the current loop
         """
@@ -152,7 +186,7 @@ class PointLikeDipole(CylindricallySymmetricSolid) :
     using Eq. (5.41) of Jackson: Classical Electrodynamics. Wiley, New York, NY, 2nd ed., (1975)
     """
     
-    def __init__(self,n,r0,m) :
+    def __init__(self,n,r0,m=1) :
         """
         Arguments
         ----------
@@ -186,10 +220,8 @@ class InfiniteWire(CylindricallySymmetricSolid) :
         """
         Arguments
         ----------
-            n: bool
-                True if direction vector points upwards
-            r0: ndarray, shape (3, )
-                The location of the solid in units of d: [x y]
+            n: same as with CylindricallySymmetricSolid
+            r0: ”
             rhoLimit: float
                 Minimal rho to calculate field for
         """
