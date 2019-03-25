@@ -291,7 +291,8 @@ def visualizeFieldMap(B,xcoord,ycoord,nLevels=40,Bmax=-1) :
     for i, title in zip(range(3),["$B_x$","$B_y$","$B_z$"]) :
         ax = axes.flatten()[i]
         try :
-            temp = ax.contour(xcoord, ycoord, np.transpose(B[i]), cmap=cm.Spectral, linewidths=3);
+            levels=np.linspace(B[i].min(),B[i].max(),nLevels)
+            temp = ax.contourf(xcoord, ycoord, np.transpose(B[i]), cmap=cm.Spectral, linewidths=3, levels=levels);
             ax.set_title(title)
             fig.colorbar(temp, ax=ax)
         except ValueError as e :
@@ -301,7 +302,7 @@ def visualizeFieldMap(B,xcoord,ycoord,nLevels=40,Bmax=-1) :
     
     levels=np.linspace(0,Bnorm.max(),nLevels)
 
-    temp=BnormAxis.contour(xcoord, ycoord, np.transpose(Bnorm), cmap=cm.Spectral, linewidths=3, levels=levels);
+    temp=BnormAxis.contourf(xcoord, ycoord, np.transpose(Bnorm), cmap=cm.Spectral, linewidths=3, levels=levels);
     BnormAxis.set_title("$|B|$")
     fig.colorbar(temp,ax=BnormAxis)
 
