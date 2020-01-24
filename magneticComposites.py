@@ -50,6 +50,17 @@ class Coil(ArrayOfSources) :
         super(Coil,self).__init__([magneticElements.CurrentLoop(n,r0+i*nz(n),Rj) for i in np.linspace(-h/2.,h/2.,nh) for Rj in np.linspace(R,R+w,nw)])
 
 
+class PackedCoil(ArrayOfSources) :
+    """
+    cf. PackedCoilModel.pdf on how this is derived from (two intertwined) Coil(s)
+    """
+    
+    def __init__(self,n,r0,R,w,nw,h,nh,Delta,moreOrLess) :
+        super(PackedCoil,self).__init__([
+            Coil(n,r0,R,w,nw,h,nh),
+            Coil(n,r0,R+math.sqrt(3.)/2.*Delta,w-sqrt(3.)*Delta if moreOrLess else w,nw-math.copysign(1,Delta) if moreOrLess else nw,h-2.*abs(Delta),nh-1)
+        ])
+
 
 class TwoCoils(ArrayOfSources) :
     
