@@ -1,0 +1,7 @@
+.bzr
+/data
+*.ipynb
+*pycache*
+/examples*
+/Ioffe plate
+/Archive notebooks
