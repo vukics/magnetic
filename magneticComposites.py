@@ -144,6 +144,27 @@ class IoffeWires(ArrayOfSources) :
 
 
 
+class DipoleSimplex(ArrayOfSources) :
+    """
+    From two loops
+    """
+    def __init__(self,n,r0,R,d,relativeCurrents=None) :
+        """
+        Arguments
+        ---------
+            n, r0, R: same as for CurrentLoop
+            d: float
+                The distance of the two loops
+        """
+        r0=np.array(r0)
+        super(DipoleSimplex,self).__init__([
+            magneticElements.CurrentLoop(n,r0+d/2.*nz(n),R),
+            magneticElements.CurrentLoop(n,r0-d/2.*nz(n),R)
+            ],relativeCurrents)
+        
+        self.d = d
+
+
 class QuadrupoleSimplex(ArrayOfSources) :
     """
     From two loops mostly for testing
