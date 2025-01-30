@@ -242,6 +242,48 @@ class InfiniteWire(CylindricallySymmetricSolid) :
         raise NotImplementedError
 
 
+# Based on: https://cnx.org/contents/UBPo-xuY@13.12:QW8ntuAW@10/Magnetic-field-due-to-current-in-straight-wire
+class FiniteWire :
+    def __init__(self,x1,x2) :
+        """
+        Arguments
+        ----------
+            x1, x2: ndarray, shape (3,)
+                Endpoints of the wire, current flow: x1->x2
+        """
+        self.x1 = x1; self.x2 = x2
+        self.dx = x2-x1
+        self.dxel = self.dx/np.linalg.norm(self.dx)
+        self.projector = np.outer(self.dxel,self.dxel)
+    
+    def calculateField(self,x,y,z) :
+        """
+        Arguments
+        ----------
+        x, y, z: coordinates that can be either floats or array_like types
+            for the moment, only the former!
+            
+
+        Returns
+        --------
+        B: ndarray, shape (3,Nx,Ny,Nz)
+            a vector for the B field at each position specified in r in inverse units of (mu I) / (4 pi)
+        """
+
+        dr = np.array([x,y,z])-self.x1; drel = dr/np.linalg.norm(dr)
+        
+        ct1 = np.dot(drel,self.dxel); ct2 = np.dot((self.dx-dr)/np.linalg.norm(self.dx-dr),self.dxel)
+        
+        drperp = np.dot((np.identity(3)-self.projector),dr)
+        
+        Bnorm = (ct1+ct2)/np.linalg.norm(drperp)
+        
+        # print(ct1,ct2,drperp,np.dot(drperp,self.dx),Bnorm)
+        
+        Bdir = np.cross(self.dxel,drperp)/np.linalg.norm(drperp)
+        
+        return Bnorm*Bdir
+
 
 class ArrayOfSources(object) :
     """
