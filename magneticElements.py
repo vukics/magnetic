@@ -115,7 +115,7 @@ class CylindricallySymmetricSolid(object) :
             (for I in amps and d in meters and mu = 4 pi * 10^-7 we get Tesla)
         """
         
-        r = np.meshgrid(*[ (xx if type(xx).__module__ == np.__name__ else (float(xx)) ) for xx in [x,y,z] ],indexing='ij')
+        r = list( np.meshgrid(*[ (xx if type(xx).__module__ == np.__name__ else (float(xx)) ) for xx in [x,y,z] ],indexing='ij') )
 
         # point location from center of coil
         for i in range(3) : r[i]-=self.r0[i]
