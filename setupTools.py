@@ -4,7 +4,8 @@ import magneticComposites as mg
 import numpy as np
 
 from scipy.optimize import minimize
-from scipy.misc import derivative
+
+from numdifftools.core import Derivative as derivative
 
 import matplotlib.pyplot as plt
 
@@ -53,9 +54,9 @@ def potentialEnergyGradient(x,y,z) :
 
 
 def derivatives(f,x0,dx0,epsDeriv=1e-3) :
-    return (abs(derivative(f,x0+dx0,dx=epsDeriv*abs(dx0))),
-            derivative(f,x0+dx0,dx=epsDeriv*abs(dx0),n=2,order=5),
-            derivative(f,x0+dx0,dx=epsDeriv*abs(dx0),n=3,order=5)
+    return (abs(derivative(f,step=epsDeriv*abs(dx0))(x0+dx0)),
+            derivative(f,step=epsDeriv*abs(dx0),n=2,order=6)(x0+dx0),
+            derivative(f,step=epsDeriv*abs(dx0),n=3,order=6)(x0+dx0)
             )
 
 
